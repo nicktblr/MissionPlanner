@@ -225,13 +225,23 @@ namespace UAVCAN
                 frame_bit_ofs += frame_copy_bits;
             }
 
+            if ((bitlen % 8) != 0)
+            {
+                // coverity[overrun-local]
+                //output[bitlen / 8] = (byte)(output[bitlen / 8] >> ((8 - (bitlen % 8)) & 7));
+            }
+
             BigInteger input = new BigInteger(output.Reverse().ToArray());
 
-            for (uint a = 0; a < (bitlen + (8-(bitlen%8))); a++)
+            for (uint a = 0; a < bitlen; a++)
             {
                 if ((input & (1L << (int)a)) > 0)
                 {
                     ((uavcan.statetracking)ctx).bi.setBit((uint)((uavcan.statetracking)ctx).bit + a);
+                }
+                else
+                {
+                    ((uavcan.statetracking)ctx).bi.unsetBit((uint)((uavcan.statetracking)ctx).bit + a);
                 }
             }
 

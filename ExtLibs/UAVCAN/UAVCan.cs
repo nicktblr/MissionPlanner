@@ -48,11 +48,19 @@ namespace UAVCAN
             var buf = new byte[16];
             var ctx = new statetracking() { bit = bit_offset };
             T ans = input;
+            T ans2 = input;
             uavcan.canardEncodeScalar(buf, bit_offset, bitlength, input);
             uavcan_transmit_chunk_handler(buf, bitlength, ctx);
-            uavcan.canardDecodeScalar(new uavcan.CanardRxTransfer(buf), bit_offset, bitlength, signed, ref ans);
+            uavcan.canardEncodeScalar(buf, bit_offset, bitlength, input);
+            uavcan_transmit_chunk_handler(buf, bitlength, ctx);
+
+            uavcan.canardDecodeScalar(new uavcan.CanardRxTransfer(ctx.ToBytes()), bit_offset, bitlength, signed, ref ans);
+            uavcan.canardDecodeScalar(new uavcan.CanardRxTransfer(ctx.ToBytes()), bit_offset + (uint)bitlength, bitlength, signed, ref ans2);
 
             if (input.ToString() != ans.ToString())
+                throw new Exception();
+
+            if (input.ToString() != ans2.ToString())
                 throw new Exception();
 
             return true;
@@ -688,20 +696,50 @@ namespace UAVCAN
 
         public static void test()
         {
+            /*
+RX	09:19:57.327377	08042479	EB 3C 00 00 00 00 00 86 	.<......	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	00 00 30 77 4F D6 17 26 	..0wO..&	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	84 05 5F 00 0E BE CF 06 	.._.....	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	B1 15 84 23 F1 CF CA 26 	...#...&	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	F0 3F FD 21 D0 00 8D 06 	.?.!....	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	2B 42 B0 A0 B6 1F 6C 26 	+B....l&	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	40 F9 E2 50 00 00 00 06 	@..P....	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.327377	08042479	00 00 00 E2 50 00 00 26 	....P..&	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.328377	08042479	00 00 00 00 16 59 69 06 	.....Yi.	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.328377	08042479	3F 00 00 00 00 00 00 26 	?......&	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.328377	08042479	69 3F 00 00 00 00 00 06 	i?......	121		uavcan.equipment.gnss.Fix
+RX	09:19:57.328377	08042479	00 69 3F 66             	.i?f	121		uavcan.equipment.gnss.Fix
+timestamp: 
+  usec: 0 # UNKNOWN
+gnss_timestamp: 
+  usec: 1552612798199600
+gnss_time_standard: 2 # UTC
+num_leap_seconds: 0 # UNKNOWN
+longitude_deg_1e8: 11573116430
+latitude_deg_1e8: -3330374480
+height_ellipsoid_mm: -16341
+height_msl_mm: 15012
+ned_velocity: [0.0590, -0.1331, -0.4141]
+sats_used: 7
+status: 3 # 3D_FIX
+pdop: 2.2109
+position_covariance: [39.0625, 0.0000, 0.0000, 0.0000, 39.0625, 0.0000, 0.0000, 0.0000, 162.7500]
+velocity_covariance: [1.8525, 0.0000, 0.0000, 0.0000, 1.8525, 0.0000, 0.0000, 0.0000, 1.8525]
+             */
             var fix = new uavcan.uavcan_equipment_gnss_Fix()
             {
-                timestamp = new uavcan.uavcan_Timestamp() { usec = 1 },
-                gnss_timestamp = new uavcan.uavcan_Timestamp() { usec = 2 },
-                gnss_time_standard = 3,
-                num_leap_seconds = 4,
-                latitude_deg_1e8 = 5,
-                longitude_deg_1e8 = 6,
-                height_ellipsoid_mm = 7,
-                height_msl_mm = 8,
-                ned_velocity = new[] { 1f, 2f, 3f },
-                sats_used = 10,
+                timestamp = new uavcan.uavcan_Timestamp() { usec = 0 },
+                gnss_timestamp = new uavcan.uavcan_Timestamp() { usec = 1552612798199600 },
+                gnss_time_standard = 2,
+                num_leap_seconds = 0,
+                latitude_deg_1e8 = 11573116430,
+                longitude_deg_1e8 = -3330374480,
+                height_ellipsoid_mm = -16341,
+                height_msl_mm = 15012,
+                ned_velocity = new[] { 0.0590f, -0.1331f, -0.4141f },
+                sats_used = 7,
                 status = 3,
-                pdop = 12f,
+                pdop = 2.2109f,
             };
 
             testconversion((byte)125, 7, false);
@@ -730,6 +768,9 @@ namespace UAVCAN
             testconversion((long)-1234567890, 33, true, 13);
             testconversion((int)-12345678, 27, true, 13);
             testconversion((int)(1 << 25), 27, true, 13);
+
+            testconversion(11573116430L, 37, true, 0);
+            testconversion(-3330374480L, 37, true, 0);
 
             testconversion((ulong)1234567890, 55, false, 55);
             // will fail

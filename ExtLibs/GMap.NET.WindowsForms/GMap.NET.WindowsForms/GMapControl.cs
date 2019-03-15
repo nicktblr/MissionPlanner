@@ -1,4 +1,6 @@
 ﻿
+using SkiaSharp.Views.Desktop;
+
 namespace GMap.NET.WindowsForms
 {
    using System;
@@ -28,7 +30,7 @@ namespace GMap.NET.WindowsForms
     /// <summary>
     /// GMap.NET control for Windows Forms
     /// </summary>   
-    public partial class GMapControl : UserControl, Interface, IControl
+    public partial class GMapControl : SKControl, Interface, IControl
    {
 #if !PocketPC
       /// <summary>
@@ -565,7 +567,19 @@ namespace GMap.NET.WindowsForms
 
               Overlays.CollectionChanged += new NotifyCollectionChangedEventHandler(Overlays_CollectionChanged);
           }
-      }
+
+          PaintSurface += delegate (object sender, SKPaintSurfaceEventArgs args)
+          {
+              try
+              {
+                  //doPaint(new SkiaGraphics(args.Surface));
+                  args.Surface.Canvas.Flush();
+              }
+              catch { }
+          };
+
+          OnLoad(null);
+        }
 
 #endif
 
@@ -1211,8 +1225,9 @@ namespace GMap.NET.WindowsForms
       /// gets image of the current view
       /// </summary>
       /// <returns></returns>
-      public Image ToImage()
+   /*   public Image ToImage()
       {
+          
          Image ret = null;
          try
          {
@@ -1247,9 +1262,9 @@ namespace GMap.NET.WindowsForms
             ret = null;
          }
          return ret;
-      }
+      }*/
 #endif
-
+    
       /// <summary>
       /// offset position in pixels
       /// </summary>
@@ -1272,9 +1287,9 @@ namespace GMap.NET.WindowsForms
 #if !PocketPC
       public readonly static bool IsDesignerHosted = LicenseManager.UsageMode == LicenseUsageMode.Designtime;
 
-      protected override void OnLoad(EventArgs e)
+      protected void OnLoad(EventArgs e)
       {
-         base.OnLoad(e);
+         //base.OnLoad(e);
 
          if (!IsDesignerHosted)
          {
@@ -1333,7 +1348,7 @@ namespace GMap.NET.WindowsForms
          base.OnCreateControl();
 
          if (!IsDesignerHosted)
-         {
+         {/*
              var f = ParentForm;
              if (f != null)
              {
@@ -1346,7 +1361,7 @@ namespace GMap.NET.WindowsForms
                  {
                      f.FormClosing += new FormClosingEventHandler(ParentForm_FormClosing);
                  }
-             }
+             }*/
          }
       }
 
@@ -1415,6 +1430,19 @@ namespace GMap.NET.WindowsForms
        {
            var f = new GdiGraphics(e.Graphics);
            doPaint(f);
+
+           //var sv = new SvgGraphics();
+
+           //doPaint(sv);
+
+           //File.WriteAllText("map.svg", sv.WriteSVGString());
+
+           //var sk = new SkiaGraphics();
+
+           //doPaint(sk);
+
+           //File.WriteAllBytes("map.png", sk.WriteImage());
+
            base.OnPaint(e);
         }
 
@@ -2270,6 +2298,8 @@ namespace GMap.NET.WindowsForms
 
          base.OnMouseMove(e);
       }
+
+      public Cursor Cursor { get; set; }
 
 #if !PocketPC
 
