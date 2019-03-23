@@ -16,13 +16,7 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@0
 
-- script: .nuget\nuget.exe update -self
-  workingDirectory: $(Agent.BuildDirectory)
-
-- script: .nuget\nuget.exe restore
-  workingDirectory: $(Agent.BuildDirectory)
 
 - task: VSBuild@1
   inputs:
