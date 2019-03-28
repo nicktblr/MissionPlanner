@@ -882,6 +882,15 @@ namespace MissionPlanner.Utilities
                                         .ToStructure<MAVLink.mavlink_sys_status_t>()
                             };
 
+                        if (MainV2.comPort.MAV.getPacket((byte)MAVLink.MAVLINK_MSG_ID.DATA64) != null)
+                            message.DATA64 = new Message2()
+                            {
+                                index = 1,
+                                msg =
+                                    MainV2.comPort.MAV.getPacket((byte)MAVLink.MAVLINK_MSG_ID.DATA64)
+                                        .ToStructure<MAVLink.mavlink_data64_t>()
+                            };
+
                         message.META_LINKQUALITY =
                             message.SYS_STATUS =
                                 new Message2()
@@ -1230,6 +1239,7 @@ namespace MissionPlanner.Utilities
             public Message2 GPS_STATUS;
             public Message2 NAV_CONTROLLER_OUTPUT;
             public Message2 META_LINKQUALITY;
+            public Message2 DATA64;
         }
 
         public struct Message2
